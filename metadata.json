@@ -1,0 +1,6 @@
+{
+  "name": "Margarita Indumentaria",
+  "description": "Tienda de indumentaria infantil y de bebés con carrito, pagos, WhatsApp, gestión de inventario en tiempo real y panel de administración con reportes PDF.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

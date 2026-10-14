@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160" fill="none">
+  <!-- Margarita Oficial de 9 pétalos multicolores -->
+  <g transform="translate(80, 80)">
+    <!-- 9 Pétalos con contorno negro -->
+    <!-- 1. Amarillo (Arriba ~ -80 deg) -->
+    <path d="M 0 0 m -11,-22 C -15,-45 -14,-62 0,-62 C 14,-62 15,-45 11,-22 Z" transform="rotate(0)" fill="#FFDA00" stroke="#111111" stroke-width="4.2" stroke-linejoin="round" />
+    
+    <!-- 2. Verde Kelly (~40 deg) -->
+    <path d="M 0 0 m -11,-22 C -15,-45 -14,-62 0,-62 C 14,-62 15,-45 11,-22 Z" transform="rotate(40)" fill="#00A651" stroke="#111111" stroke-width="4.2" stroke-linejoin="round" />
+    
+    <!-- 3. Verde Lima (~80 deg) -->
+    <path d="M 0 0 m -11,-22 C -15,-45 -14,-62 0,-62 C 14,-62 15,-45 11,-22 Z" transform="rotate(80)" fill="#82C330" stroke="#111111" stroke-width="4.2" stroke-linejoin="round" />
+    
+    <!-- 4. Celeste Cielo (~120 deg) -->
+    <path d="M 0 0 m -11,-22 C -15,-45 -14,-62 0,-62 C 14,-62 15,-45 11,-22 Z" transform="rotate(120)" fill="#41B2E6" stroke="#111111" stroke-width="4.2" stroke-linejoin="round" />
+    
+    <!-- 5. Azul Intenso (~160 deg) -->
+    <path d="M 0 0 m -11,-22 C -15,-45 -14,-62 0,-62 C 14,-62 15,-45 11,-22 Z" transform="rotate(160)" fill="#008FD5" stroke="#111111" stroke-width="4.2" stroke-linejoin="round" />
+    
+    <!-- 6. Violeta Lavanda (~200 deg) -->
+    <path d="M 0 0 m -11,-22 C -15,-45 -14,-62 0,-62 C 14,-62 15,-45 11,-22 Z" transform="rotate(200)" fill="#A0A3D4" stroke="#111111" stroke-width="4.2" stroke-linejoin="round" />
+    
+    <!-- 7. Rosa Suave (~240 deg) -->
+    <path d="M 0 0 m -11,-22 C -15,-45 -14,-62 0,-62 C 14,-62 15,-45 11,-22 Z" transform="rotate(240)" fill="#ECA2C7" stroke="#111111" stroke-width="4.2" stroke-linejoin="round" />
+    
+    <!-- 8. Rosa Coral (~280 deg) -->
+    <path d="M 0 0 m -11,-22 C -15,-45 -14,-62 0,-62 C 14,-62 15,-45 11,-22 Z" transform="rotate(280)" fill="#E85A7A" stroke="#111111" stroke-width="4.2" stroke-linejoin="round" />
+    
+    <!-- 9. Naranja (~320 deg) -->
+    <path d="M 0 0 m -11,-22 C -15,-45 -14,-62 0,-62 C 14,-62 15,-45 11,-22 Z" transform="rotate(320)" fill="#F58220" stroke="#111111" stroke-width="4.2" stroke-linejoin="round" />
+
+    <!-- Centro Blanco con contorno negro -->
+    <circle cx="0" cy="0" r="23" fill="#FFFFFF" stroke="#111111" stroke-width="4.8" />
+    
+    <!-- Detalle gráfico interior: comilla / tilde de brillo y punto -->
+    <path d="M 4 -12 C 8 -9 9 -4 6 0 C 4 -3 5 -8 1 -10 Z" fill="#111111" />
+    <circle cx="6" cy="6" r="2.4" fill="#111111" />
+  </g>
+</svg>
