@@ -15,7 +15,10 @@ import { calcularCostoEnvio, precioFinal } from './src/config';
  */
 async function iniciarServidor() {
   const app = express();
-  const PUERTO = 3000;
+  // Detrás de Nginx: tomar la IP real del visitante (para el límite de intentos de login)
+  app.set('trust proxy', 'loopback');
+  // Puerto configurable (PORT en .env) para convivir con otras apps en el mismo servidor
+  const PUERTO = Number(process.env.PORT) || 3000;
 
   // JSON chico para todas las rutas, salvo la de subida de fotos (que tiene su propio límite)
   const parserJson = express.json({ limit: '300kb' });
