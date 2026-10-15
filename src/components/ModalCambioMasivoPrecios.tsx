@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { Producto, CategoriaProducto, SubcategoriaProducto } from '../types';
+import { CATEGORIAS, TODAS_SUBCATEGORIAS, subcategoriasPara } from '../data/menu';
 import { 
   DollarSign, Percent, ArrowUpRight, ArrowDownRight, RefreshCw, 
   Check, AlertCircle, Layers, Filter, Eye, X, HelpCircle
@@ -31,7 +32,6 @@ export const ModalCambioMasivoPrecios: React.FC<ModalCambioMasivoPreciosProps> =
   productos,
   alConfirmarActualizacionMasiva
 }) => {
-  if (!abierto) return null;
 
   // Estados de Configuración
   const [categoriaSeleccionada, setCategoriaSeleccionada] = useState<CategoriaProducto | 'Todas'>('Todas');
@@ -45,22 +45,12 @@ export const ModalCambioMasivoPrecios: React.FC<ModalCambioMasivoPreciosProps> =
   const [mensajeExito, setMensajeExito] = useState<string | null>(null);
 
   // Categorías y Subcategorías disponibles
-  const categoriasLista: (CategoriaProducto | 'Todas')[] = [
-    'Todas',
-    'Bebé Otoño-Invierno',
-    'Bebé Primavera-Verano',
-    'Kids',
-    'Accesorios'
-  ];
+  const categoriasLista: (CategoriaProducto | 'Todas')[] = ['Todas', ...CATEGORIAS];
 
+  // Tipos de prenda de la categoría elegida (o todos)
   const subcategoriasLista: (SubcategoriaProducto | 'Todas')[] = [
     'Todas',
-    'Conjuntos & Sets',
-    'Vestidos & Enteritos',
-    'Sweaters & Abrigos',
-    'Bodys & Básicos',
-    'Pantalones',
-    'Accesorios & Calzado'
+    ...(categoriaSeleccionada === 'Todas' ? TODAS_SUBCATEGORIAS : subcategoriasPara(categoriaSeleccionada))
   ];
 
   // Cálculo en tiempo real de productos afectados y precios nuevos
@@ -161,6 +151,9 @@ export const ModalCambioMasivoPrecios: React.FC<ModalCambioMasivoPreciosProps> =
     }
   };
 
+  // Los hooks van siempre antes de cualquier return (reglas de hooks de React)
+  if (!abierto) return null;
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
       <div className="bg-white rounded-3xl shadow-2xl max-w-4xl w-full max-h-[90vh] flex flex-col overflow-hidden border border-[#e5d8cc]">
@@ -213,7 +206,10 @@ export const ModalCambioMasivoPrecios: React.FC<ModalCambioMasivoPreciosProps> =
                 </label>
                 <select
                   value={categoriaSeleccionada}
-                  onChange={(e) => setCategoriaSeleccionada(e.target.value as any)}
+                  onChange={(e) => {
+                    setCategoriaSeleccionada(e.target.value as any);
+                    setSubcategoriaSeleccionada('Todas');
+                  }}
                   className="w-full bg-white border border-[#d9ceb9] rounded-xl px-3 py-2 text-sm text-[#1e1b19] font-medium focus:ring-2 focus:ring-[#735a3e] outline-none"
                 >
                   {categoriasLista.map(cat => (

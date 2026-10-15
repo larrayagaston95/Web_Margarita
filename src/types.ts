@@ -3,21 +3,21 @@
  * Estructura limpia y tipada para mantener el proyecto.
  */
 
-export type CategoriaProducto = 
+// La estructura completa del menú (categorías, Nena/Varón y tipos de prenda)
+// está en src/data/menu.ts
+export type CategoriaProducto =
   | 'Bebé Otoño-Invierno'
   | 'Bebé Primavera-Verano'
-  | 'Kids'
-  | 'Accesorios';
+  | 'Kids Otoño-Invierno'
+  | 'Kids Primavera-Verano';
 
-export type SubcategoriaProducto = 
-  | 'Conjuntos & Sets'
-  | 'Vestidos & Enteritos'
-  | 'Sweaters & Abrigos'
-  | 'Bodys & Básicos'
-  | 'Pantalones'
-  | 'Accesorios & Calzado';
+export type GeneroProducto = 'Nena' | 'Varón' | 'Unisex';
 
-export type TalleBebe = '0-3m' | '3-6m' | '6-9m' | '9-12m' | '12-18m' | '2T' | '4T' | '6T';
+/** Tipo de prenda (ej. "Joggers", "Enteritos"). Las opciones están en src/data/menu.ts */
+export type SubcategoriaProducto = string;
+
+/** Talle (ej. "0-3m" para bebé, "4" para kids). */
+export type TalleBebe = string;
 
 export interface ColorProducto {
   nombre: string;
@@ -29,8 +29,10 @@ export interface Producto {
   sku: string;
   nombre: string;
   categoria: CategoriaProducto;
+  genero?: GeneroProducto;
   subcategoria?: SubcategoriaProducto;
   precio: number;
+  /** Precio rebajado. Si es menor que "precio", es el que se cobra. */
   precioOferta?: number;
   stock: number;
   stockMinimo: number;

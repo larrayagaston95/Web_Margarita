@@ -42,7 +42,7 @@ export const BentoCategorias: React.FC<BentoCategoriasProps> = ({ alSeleccionarC
                   Desde Recién Nacidos
                 </span>
                 <h3 className="font-display font-bold text-2xl md:text-3xl text-white">
-                  Línea Bebé
+                  Bebé Otoño-Invierno
                 </h3>
               </div>
               <button className="bg-white/90 text-[#735a3e] px-5 py-2 rounded-full font-semibold text-xs hover:bg-[#735a3e] hover:text-white transition-all flex items-center gap-1 shadow-md">
@@ -54,7 +54,7 @@ export const BentoCategorias: React.FC<BentoCategoriasProps> = ({ alSeleccionarC
 
           {/* Categoría Kids (2 cols, 1 fila) */}
           <div
-            onClick={() => alSeleccionarCategoria('Kids')}
+            onClick={() => alSeleccionarCategoria('Kids Otoño-Invierno')}
             className="md:col-span-2 md:row-span-1 relative min-h-[200px] rounded-3xl overflow-hidden group cursor-pointer cloud-shadow"
           >
             <img
@@ -67,10 +67,10 @@ export const BentoCategorias: React.FC<BentoCategoriasProps> = ({ alSeleccionarC
             <div className="absolute bottom-6 left-6 right-6 flex justify-between items-end">
               <div>
                 <span className="text-xs uppercase tracking-widest text-[#cfeaca] font-bold block mb-1">
-                  2 a 6 Años
+                  Desde 2 Años
                 </span>
                 <h3 className="font-display font-bold text-2xl text-white">
-                  Colección Kids
+                  Kids Otoño-Invierno
                 </h3>
               </div>
               <button className="bg-white/90 text-[#735a3e] px-5 py-2 rounded-full font-semibold text-xs hover:bg-[#735a3e] hover:text-white transition-all flex items-center gap-1 shadow-md">
@@ -80,14 +80,14 @@ export const BentoCategorias: React.FC<BentoCategoriasProps> = ({ alSeleccionarC
             </div>
           </div>
 
-          {/* Categoría Accesorios (2 cols, 1 fila) */}
+          {/* Categoría Bebé Primavera-Verano (2 cols, 1 fila) */}
           <div
-            onClick={() => alSeleccionarCategoria('Accesorios')}
+            onClick={() => alSeleccionarCategoria('Bebé Primavera-Verano')}
             className="md:col-span-2 md:row-span-1 relative min-h-[200px] rounded-3xl overflow-hidden group cursor-pointer cloud-shadow"
           >
             <img
               src="https://lh3.googleusercontent.com/aida-public/AB6AXuB-NZ054oopdz5zW1eWm17xr2DN-JNmnGZaW59nM8CZ81oas8rafM_FkGT3L9qSHE2v7Ycqcqq4ah-Q6gfO737ZHjlRtSwKTn509pQOmb1zkqz9P_GIGOFbvThgv-DAd3dYoAbAliETTrrUciqaRJ44aZEvktkhPW6XlMGxJe0CKwKnn9zT5etUBHrwn0GKqQr6kJFxDMIYLczN9ke9S6aSiRaEG-OCxRQy9YbiQjEI02iaPzfuv2nS"
-              alt="Accesorios para bebés, mantas, escarpines y gorritos"
+              alt="Ropa de bebé para primavera y verano"
               className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent group-hover:bg-black/30 transition-colors" />
@@ -95,10 +95,10 @@ export const BentoCategorias: React.FC<BentoCategoriasProps> = ({ alSeleccionarC
             <div className="absolute bottom-6 left-6 right-6 flex justify-between items-end">
               <div>
                 <span className="text-xs uppercase tracking-widest text-[#ffddbb] font-bold block mb-1">
-                  Mantas, Gorritos y Calzado
+                  Bebé · Telas livianas
                 </span>
                 <h3 className="font-display font-bold text-2xl text-white">
-                  Accesorios Artesanales
+                  Primavera-Verano
                 </h3>
               </div>
               <button className="bg-white/90 text-[#735a3e] px-5 py-2 rounded-full font-semibold text-xs hover:bg-[#735a3e] hover:text-white transition-all flex items-center gap-1 shadow-md">

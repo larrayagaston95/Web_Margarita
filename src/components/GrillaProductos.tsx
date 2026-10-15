@@ -1,12 +1,15 @@
 import React, { useState } from 'react';
 import { Producto, CategoriaProducto } from '../types';
-import { ShoppingBag, Eye, AlertTriangle, Sparkles } from 'lucide-react';
+import { ShoppingBag, Eye, AlertTriangle } from 'lucide-react';
+import { precioFinal, tieneOferta } from '../config';
 
 interface GrillaProductosProps {
   productos: Producto[];
   categoriaSeleccionada: CategoriaProducto | 'Todas' | 'Home';
   alSeleccionarProducto: (producto: Producto) => void;
   alAgregarAlCarrito: (producto: Producto, talle: string, e: React.MouseEvent) => void;
+  /** Título de la sección (ej. "Bebé Otoño-Invierno · Nena"). */
+  titulo?: string;
 }
 
 /**
@@ -18,7 +21,8 @@ export const GrillaProductos: React.FC<GrillaProductosProps> = ({
   productos,
   categoriaSeleccionada,
   alSeleccionarProducto,
-  alAgregarAlCarrito
+  alAgregarAlCarrito,
+  titulo
 }) => {
   const [criterioOrden, setCriterioOrden] = useState<'destacados' | 'precio-asc' | 'precio-desc' | 'nuevos'>('destacados');
 
@@ -30,8 +34,8 @@ export const GrillaProductos: React.FC<GrillaProductosProps> = ({
 
   // Ordenamiento
   const productosOrdenados = [...productosFiltrados].sort((a, b) => {
-    if (criterioOrden === 'precio-asc') return a.precio - b.precio;
-    if (criterioOrden === 'precio-desc') return b.precio - a.precio;
+    if (criterioOrden === 'precio-asc') return precioFinal(a) - precioFinal(b);
+    if (criterioOrden === 'precio-desc') return precioFinal(b) - precioFinal(a);
     if (criterioOrden === 'nuevos') return (b.esNuevo ? 1 : 0) - (a.esNuevo ? 1 : 0);
     return (b.esDestacado ? 1 : 0) - (a.esDestacado ? 1 : 0);
   });
@@ -45,9 +49,10 @@ export const GrillaProductos: React.FC<GrillaProductosProps> = ({
             Nuestra Colección
           </span>
           <h2 className="font-display font-bold text-2xl md:text-3xl text-[#1e1b19]">
-            {categoriaSeleccionada === 'Home' || categoriaSeleccionada === 'Todas'
-              ? 'Nuevos Ingresos'
-              : categoriaSeleccionada}
+            {titulo ||
+              (categoriaSeleccionada === 'Home' || categoriaSeleccionada === 'Todas'
+                ? 'Nuevos Ingresos'
+                : categoriaSeleccionada)}
           </h2>
           <div className="w-20 h-1 bg-[#735a3e] rounded-full mt-2" />
         </div>
@@ -96,6 +101,11 @@ export const GrillaProductos: React.FC<GrillaProductosProps> = ({
 
                 {/* Badge Nuevo / Destacado */}
                 <div className="absolute top-3 left-3 flex flex-col gap-1">
+                  {tieneOferta(producto) && (
+                    <span className="bg-[#735a3e] text-white px-2.5 py-1 rounded-full text-[10px] font-bold tracking-wider uppercase shadow-sm">
+                      OFERTA
+                    </span>
+                  )}
                   {producto.esNuevo && (
                     <span className="bg-[#E5989B] text-white px-2.5 py-1 rounded-full text-[10px] font-bold tracking-wider uppercase shadow-sm">
                       NUEVO
@@ -130,7 +140,7 @@ export const GrillaProductos: React.FC<GrillaProductosProps> = ({
               {/* Información del Producto */}
               <div className="p-4 flex flex-col flex-grow text-center">
                 <span className="text-[#80756b] font-semibold text-[11px] uppercase tracking-widest block mb-1">
-                  {producto.categoria}
+                  {producto.subcategoria || producto.categoria}
                 </span>
 
                 <h3 className="font-display font-semibold text-sm md:text-base text-[#1e1b19] group-hover:text-[#735a3e] transition-colors line-clamp-1">
@@ -138,7 +148,12 @@ export const GrillaProductos: React.FC<GrillaProductosProps> = ({
                 </h3>
 
                 <p className="font-bold text-base md:text-lg text-[#B08D57] mt-1 mb-3">
-                  ${producto.precio.toLocaleString('es-AR')}
+                  ${precioFinal(producto).toLocaleString('es-AR')}
+                  {tieneOferta(producto) && (
+                    <span className="ml-2 text-xs font-normal text-[#80756b] line-through">
+                      ${producto.precio.toLocaleString('es-AR')}
+                    </span>
+                  )}
                 </p>
 
                 {/* Acceso rápido a Agregar al Carrito */}
