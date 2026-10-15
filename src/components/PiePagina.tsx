@@ -3,6 +3,7 @@ import { Instagram, Facebook, MapPin, Phone, Mail, Heart } from 'lucide-react';
 import { CategoriaProducto } from '../types';
 import { LogoMargarita } from './LogoMargarita';
 import { CONFIG_TIENDA, urlWhatsApp } from '../config';
+import { CATEGORIAS } from '../data/menu';
 
 interface PiePaginaProps {
   alSeleccionarCategoria: (cat: CategoriaProducto | 'Home') => void;
@@ -39,26 +40,13 @@ export const PiePagina: React.FC<PiePaginaProps> = ({ alSeleccionarCategoria }) 
         <div className="space-y-2">
           <h4 className="font-display font-bold text-sm text-white">Catálogo</h4>
           <ul className="space-y-1.5 text-xs text-[#b1a89c]">
-            <li>
-              <button onClick={() => alSeleccionarCategoria('Bebé Otoño-Invierno')} className="hover:text-white transition-colors">
-                Bebé Otoño-Invierno
-              </button>
-            </li>
-            <li>
-              <button onClick={() => alSeleccionarCategoria('Bebé Primavera-Verano')} className="hover:text-white transition-colors">
-                Bebé Primavera-Verano
-              </button>
-            </li>
-            <li>
-              <button onClick={() => alSeleccionarCategoria('Kids')} className="hover:text-white transition-colors">
-                Línea Kids (2-6 años)
-              </button>
-            </li>
-            <li>
-              <button onClick={() => alSeleccionarCategoria('Accesorios')} className="hover:text-white transition-colors">
-                Accesorios & Mantas
-              </button>
-            </li>
+            {CATEGORIAS.map(cat => (
+              <li key={cat}>
+                <button onClick={() => alSeleccionarCategoria(cat)} className="hover:text-white transition-colors">
+                  {cat}
+                </button>
+              </li>
+            ))}
           </ul>
         </div>
 
@@ -96,10 +84,12 @@ export const PiePagina: React.FC<PiePaginaProps> = ({ alSeleccionarCategoria }) 
             <Phone size={16} className="text-[#D9B99B] shrink-0" />
             {CONFIG_TIENDA.telefonoVisible}
           </p>
-          <p className="flex items-center gap-2">
-            <Mail size={16} className="text-[#D9B99B] shrink-0" />
-            {CONFIG_TIENDA.email}
-          </p>
+          {CONFIG_TIENDA.email && (
+            <p className="flex items-center gap-2">
+              <Mail size={16} className="text-[#D9B99B] shrink-0" />
+              {CONFIG_TIENDA.email}
+            </p>
+          )}
         </div>
       </div>
 

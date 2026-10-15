@@ -12,7 +12,9 @@ import { LoginAdmin } from './components/LoginAdmin';
 import { SeccionNewsletter } from './components/SeccionNewsletter';
 import { PiePagina } from './components/PiePagina';
 import { BotonFlotanteWhatsapp } from './components/BotonFlotanteWhatsapp';
-import { calcularCostoEnvio, urlWhatsApp } from './config';
+import { calcularCostoEnvio, urlWhatsApp, precioFinal } from './config';
+import { prepararImagen } from './utils/imagenes';
+import { coincideGenero } from './data/menu';
 
 const CLAVE_TOKEN_ADMIN = 'margarita_admin_token';
 
@@ -53,6 +55,8 @@ export function App() {
 
   // Estados de navegación y filtros
   const [categoriaActiva, setCategoriaActiva] = useState<CategoriaProducto | 'Todas' | 'Home'>('Home');
+  const [generoActivo, setGeneroActivo] = useState<'Nena' | 'Varón' | undefined>(undefined);
+  const [subcategoriaActiva, setSubcategoriaActiva] = useState<string | undefined>(undefined);
   const [busqueda, setBusqueda] = useState('');
 
   // Estados del Carrito
@@ -103,7 +107,7 @@ export function App() {
     if (res.status === 401) {
       cerrarSesionAdmin();
     }
-    return res.json();
+    return res.json().catch(() => ({ exito: false, mensaje: `Error del servidor (${res.status}).` }));
   };
 
   // 1. Cargar datos del servidor
@@ -209,7 +213,7 @@ export function App() {
     const ventana = window.open('', '_blank');
 
     let numeroPedido = '';
-    let subtotal = carrito.reduce((s, i) => s + i.producto.precio * i.cantidad, 0);
+    let subtotal = carrito.reduce((s, i) => s + precioFinal(i.producto) * i.cantidad, 0);
     let costoEnvio = calcularCostoEnvio(subtotal);
     let total = subtotal + costoEnvio;
 
@@ -250,14 +254,14 @@ export function App() {
       ? `¡Hola Margarita Indumentaria! Quisiera confirmar el pedido *${numeroPedido}*:\n\n`
       : `¡Hola Margarita Indumentaria! Quisiera hacer este pedido:\n\n`;
     carrito.forEach((item, index) => {
-      mensaje += `${index + 1}. *${item.producto.nombre}* (Talle: ${item.talleSeleccionado}, Color: ${item.colorSeleccionado.nombre}) x${item.cantidad} - $${(item.producto.precio * item.cantidad).toLocaleString('es-AR')}\n`;
+      mensaje += `${index + 1}. *${item.producto.nombre}* (Talle: ${item.talleSeleccionado}, Color: ${item.colorSeleccionado.nombre}) x${item.cantidad} - $${(precioFinal(item.producto) * item.cantidad).toLocaleString('es-AR')}\n`;
     });
     mensaje += `\n*Subtotal:* $${subtotal.toLocaleString('es-AR')}`;
     mensaje += `\n*Envío:* ${costoEnvio === 0 ? 'Gratis' : '$' + costoEnvio.toLocaleString('es-AR')}`;
     mensaje += `\n*TOTAL:* $${total.toLocaleString('es-AR')}\n`;
     mensaje += `\n*Cliente:* ${datosCliente.nombre}`;
     mensaje += `\n*Teléfono:* ${datosCliente.telefono}`;
-    mensaje += `\n*Dirección:* ${datosCliente.direccion}, ${datosCliente.ciudad}`;
+    mensaje += `\n*Dirección:* ${[datosCliente.direccion, datosCliente.ciudad].filter(Boolean).join(', ')}`;
     if (datosCliente.notas?.trim()) {
       mensaje += `\n*Notas:* ${datosCliente.notas.trim()}`;
     }
@@ -290,6 +294,16 @@ export function App() {
       console.error(e);
     }
     return false;
+  };
+
+  const handleSubirImagen = async (archivo: File): Promise<string> => {
+    const datos = await prepararImagen(archivo);
+    const res = await fetchAdmin('/api/admin/imagenes', {
+      method: 'POST',
+      body: JSON.stringify({ datos })
+    });
+    if (!res.exito || !res.url) throw new Error(res.mensaje || 'No se pudo subir la foto.');
+    return res.url;
   };
 
   const handleActualizarStockProducto = async (id: string, nuevoStock: number): Promise<boolean> => {
@@ -373,15 +387,34 @@ export function App() {
     return false;
   };
 
-  // Filtrado de búsqueda de productos
+  /** Selección desde el menú: categoría, y opcionalmente Nena/Varón y tipo de prenda. */
+  const seleccionarCategoria = (
+    categoria: CategoriaProducto | 'Todas' | 'Home',
+    genero?: 'Nena' | 'Varón',
+    subcategoria?: string
+  ) => {
+    setCategoriaActiva(categoria);
+    setGeneroActivo(genero);
+    setSubcategoriaActiva(subcategoria);
+    setBusqueda('');
+    if (esRutaAdmin) navegar('/');
+    else window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  // Filtrado por búsqueda, Nena/Varón y tipo de prenda (la categoría la filtra la grilla)
+  const textoBusqueda = busqueda.trim().toLowerCase();
   const productosFiltradosBusqueda = productos.filter(p => {
-    if (!busqueda.trim()) return true;
-    return (
-      p.nombre.toLowerCase().includes(busqueda.toLowerCase()) ||
-      p.categoria.toLowerCase().includes(busqueda.toLowerCase()) ||
-      p.descripcion.toLowerCase().includes(busqueda.toLowerCase())
-    );
+    if (!coincideGenero(p, generoActivo)) return false;
+    if (subcategoriaActiva && p.subcategoria !== subcategoriaActiva) return false;
+    if (!textoBusqueda) return true;
+    return [p.nombre, p.categoria, p.subcategoria, p.genero, p.descripcion]
+      .some(campo => (campo || '').toLowerCase().includes(textoBusqueda));
   });
+
+  const tituloCatalogo =
+    categoriaActiva === 'Home' || categoriaActiva === 'Todas'
+      ? undefined
+      : [subcategoriaActiva || categoriaActiva, generoActivo].filter(Boolean).join(' · ');
 
   const cantidadTotalCarrito = carrito.reduce((sum, item) => sum + item.cantidad, 0);
 
@@ -390,10 +423,9 @@ export function App() {
       {/* 1. Encabezado de Navegación */}
       <Navegacion
         categoriaActiva={categoriaActiva}
-        alSeleccionarCategoria={(cat) => {
-          setCategoriaActiva(cat);
-          if (esRutaAdmin) navegar('/');
-        }}
+        generoActivo={generoActivo}
+        subcategoriaActiva={subcategoriaActiva}
+        alSeleccionarCategoria={seleccionarCategoria}
         cantidadCarrito={cantidadTotalCarrito}
         alAbrirCarrito={() => setCarritoAbierto(true)}
         modoAdmin={modoAdmin}
@@ -432,6 +464,7 @@ export function App() {
             alCambiarEstadoPedido={handleCambiarEstadoPedido}
             alActualizarMasivoPrecios={handleActualizarMasivoPrecios}
             alRecargarDatos={cargarDatosServidor}
+            alSubirImagen={handleSubirImagen}
           />
         </main>
       ) : (
@@ -444,13 +477,11 @@ export function App() {
                   const elem = document.getElementById('catalogo');
                   elem?.scrollIntoView({ behavior: 'smooth' });
                 }}
-                alVerHistoria={() => {
-                  setCategoriaActiva('Bebé Otoño-Invierno');
-                }}
+                alVerHistoria={() => seleccionarCategoria('Bebé Otoño-Invierno')}
               />
               <TiraValores />
               <BentoCategorias
-                alSeleccionarCategoria={(cat) => setCategoriaActiva(cat)}
+                alSeleccionarCategoria={(cat) => seleccionarCategoria(cat)}
               />
             </>
           )}
@@ -463,6 +494,7 @@ export function App() {
               <GrillaProductos
                 productos={productosFiltradosBusqueda}
                 categoriaSeleccionada={categoriaActiva}
+                titulo={tituloCatalogo}
                 alSeleccionarProducto={(prod) => setProductoSeleccionado(prod)}
                 alAgregarAlCarrito={(prod, talle, e) => {
                   e.stopPropagation();
@@ -479,11 +511,7 @@ export function App() {
 
       {/* 5. Pie de Página */}
       <PiePagina
-        alSeleccionarCategoria={(cat) => {
-          setCategoriaActiva(cat);
-          if (esRutaAdmin) navegar('/');
-          window.scrollTo({ top: 0, behavior: 'smooth' });
-        }}
+        alSeleccionarCategoria={(cat) => seleccionarCategoria(cat)}
       />
 
       {/* 6. Botón Flotante de WhatsApp (solo en la tienda) */}
@@ -497,7 +525,11 @@ export function App() {
           producto={productoSeleccionado}
           alCerrar={() => setProductoSeleccionado(null)}
           alAgregarAlCarrito={handleAgregarAlCarrito}
-          productosRelacionados={productos.filter(p => p.id !== productoSeleccionado.id)}
+          productosRelacionados={[
+            // Primero los de la misma categoría, después el resto
+            ...productos.filter(p => p.id !== productoSeleccionado.id && p.categoria === productoSeleccionado.categoria),
+            ...productos.filter(p => p.id !== productoSeleccionado.id && p.categoria !== productoSeleccionado.categoria)
+          ]}
           alSeleccionarProductoRelacionado={(p) => setProductoSeleccionado(p)}
         />
       )}

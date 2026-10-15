@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Producto, Pedido, CategoriaProducto, SubcategoriaProducto, TalleBebe } from '../types';
+import { Producto, Pedido, CategoriaProducto, SubcategoriaProducto } from '../types';
 import { 
   Package, TrendingUp, FileText, ShoppingCart, Plus, Edit, Trash2, 
   AlertTriangle, RefreshCw, Download, Check, Search, DollarSign, Layers, Percent
@@ -7,8 +7,9 @@ import {
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid, BarChart, Bar } from 'recharts';
 import { jsPDF } from 'jspdf';
 import { ModalCambioMasivoPrecios } from './ModalCambioMasivoPrecios';
+import { FormularioProducto } from './FormularioProducto';
 import { LogoMargarita } from './LogoMargarita';
-import { CONFIG_TIENDA } from '../config';
+import { CONFIG_TIENDA, precioFinal, tieneOferta } from '../config';
 
 interface PanelAdministradorProps {
   productos: Producto[];
@@ -29,6 +30,8 @@ interface PanelAdministradorProps {
     }
   ) => Promise<boolean>;
   alRecargarDatos: () => void;
+  /** Sube una foto al servidor y devuelve su URL. */
+  alSubirImagen: (archivo: File) => Promise<string>;
 }
 
 /**
@@ -50,7 +53,8 @@ export const PanelAdministrador: React.FC<PanelAdministradorProps> = ({
   alEliminarProducto,
   alCambiarEstadoPedido,
   alActualizarMasivoPrecios,
-  alRecargarDatos
+  alRecargarDatos,
+  alSubirImagen
 }) => {
   const [pestanaActiva, setPestanaActiva] = useState<'inventario' | 'ventas' | 'pedidos' | 'reportes'>('inventario');
   const [busquedaInventario, setBusquedaInventario] = useState('');
@@ -58,84 +62,19 @@ export const PanelAdministrador: React.FC<PanelAdministradorProps> = ({
   const [modalMasivoPreciosAbierto, setModalMasivoPreciosAbierto] = useState(false);
   const [productoEditando, setProductoEditando] = useState<Producto | null>(null);
 
-  // Formulario estado local
-  const [formNombre, setFormNombre] = useState('');
-  const [formSku, setFormSku] = useState('');
-  const [formCategoria, setFormCategoria] = useState<CategoriaProducto>('Bebé Otoño-Invierno');
-  const [formPrecio, setFormPrecio] = useState<number>(15000);
-  const [formStock, setFormStock] = useState<number>(10);
-  const [formStockMin, setFormStockMin] = useState<number>(5);
-  const [formTalles, setFormTalles] = useState<TalleBebe[]>(['0-3m', '3-6m', '6-9m']);
-  const [formImagen, setFormImagen] = useState('');
-  const [formDescripcion, setFormDescripcion] = useState('');
-  const [formComposicion, setFormComposicion] = useState('100% Algodón Hipoalergénico Orgánico');
-
-  // Abrir modal para crear producto nuevo
+  // Abrir el formulario para un producto nuevo o para editar uno existente
   const handleAbrirNuevo = () => {
     setProductoEditando(null);
-    setFormNombre('');
-    setFormSku(`MAR-${Math.floor(1000 + Math.random() * 9000)}`);
-    setFormCategoria('Bebé Otoño-Invierno');
-    setFormPrecio(15000);
-    setFormStock(10);
-    setFormStockMin(5);
-    setFormTalles(['0-3m', '3-6m', '6-9m']);
-    setFormImagen('https://lh3.googleusercontent.com/aida/AP1WRLuR_7rmNEBEUHNcbd8OkxRqu1eeDC3nKe_bvKARKn6CBTKHnER3i8YIvMZL7fKgg91BzEkJPfScswvCWYKRhio0Jja-vlXdB5TAks8h3_dBwFuFfeULc5d0IHN4RTIge-FQQAQmPWC89Ub_JFiDfpxzcHz4sAmGfoK-bNU0zNh6Ulrz1DCgIz_YFog43rHBFOylU0QmXJmg5-1uqXEIpcGF6c2-TPo5_LiJp56Fp6n-u0o4kQIigyUaF9Q');
-    setFormDescripcion('Prenda artesanal de máxima suavidad.');
     setModalFormularioProducto(true);
   };
 
-  // Abrir modal para editar
   const handleAbrirEditar = (p: Producto) => {
     setProductoEditando(p);
-    setFormNombre(p.nombre);
-    setFormSku(p.sku);
-    setFormCategoria(p.categoria);
-    setFormPrecio(p.precio);
-    setFormStock(p.stock);
-    setFormStockMin(p.stockMinimo);
-    setFormTalles(p.talles);
-    setFormImagen(p.imagenPrincipal);
-    setFormDescripcion(p.descripcion);
-    setFormComposicion(p.composicion);
     setModalFormularioProducto(true);
   };
 
-  // Guardar creación / edición
-  const handleGuardarProducto = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (productoEditando) {
-      await alEditarProducto(productoEditando.id, {
-        nombre: formNombre,
-        sku: formSku,
-        categoria: formCategoria,
-        precio: formPrecio,
-        stock: formStock,
-        stockMinimo: formStockMin,
-        talles: formTalles,
-        imagenPrincipal: formImagen,
-        descripcion: formDescripcion,
-        composicion: formComposicion
-      });
-    } else {
-      await alCrearProducto({
-        sku: formSku,
-        nombre: formNombre,
-        categoria: formCategoria,
-        precio: formPrecio,
-        stock: formStock,
-        stockMinimo: formStockMin,
-        talles: formTalles,
-        colores: [{ nombre: 'Crudo Natural', hex: '#FAF9F6' }, { nombre: 'Soft Clay', hex: '#D9B99B' }],
-        descripcion: formDescripcion,
-        composicion: formComposicion,
-        cuidados: 'Lavar con agua fría ciclo delicado.',
-        imagenPrincipal: formImagen || 'https://lh3.googleusercontent.com/aida/AP1WRLuR_7rmNEBEUHNcbd8OkxRqu1eeDC3nKe_bvKARKn6CBTKHnER3i8YIvMZL7fKgg91BzEkJPfScswvCWYKRhio0Jja-vlXdB5TAks8h3_dBwFuFfeULc5d0IHN4RTIge-FQQAQmPWC89Ub_JFiDfpxzcHz4sAmGfoK-bNU0zNh6Ulrz1DCgIz_YFog43rHBFOylU0QmXJmg5-1uqXEIpcGF6c2-TPo5_LiJp56Fp6n-u0o4kQIigyUaF9Q',
-        imagenesSecundarias: []
-      });
-    }
-    setModalFormularioProducto(false);
-  };
+  const handleGuardarProducto = (datos: Omit<Producto, 'id'>) =>
+    productoEditando ? alEditarProducto(productoEditando.id, datos) : alCrearProducto(datos);
 
   // Generación y descarga del Reporte Mensual en PDF con jsPDF
   const handleDescargarReportePDF = () => {
@@ -254,7 +193,7 @@ export const PanelAdministrador: React.FC<PanelAdministradorProps> = ({
           <div className="flex flex-wrap items-center gap-2.5">
             <button
               onClick={() => setModalMasivoPreciosAbierto(true)}
-              className="bg-[#B08D57] text-white px-4 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2 hover:bg-[#977644] transition-all shadow-md animate-pulse"
+              className="bg-[#B08D57] text-white px-4 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2 hover:bg-[#977644] transition-all shadow-md"
               title="Cambio masivo de precios por categoría o subcategoría"
             >
               <Percent size={16} />
@@ -395,9 +334,19 @@ export const PanelAdministrador: React.FC<PanelAdministradorProps> = ({
                           </div>
                         </td>
                         <td className="p-3 font-mono text-[#80756b]">{p.sku}</td>
-                        <td className="p-3 font-semibold text-[#536a51]">{p.categoria}</td>
+                        <td className="p-3">
+                          <p className="font-semibold text-[#536a51]">{p.categoria}</p>
+                          <p className="text-[10px] text-[#80756b]">
+                            {[p.genero, p.subcategoria].filter(Boolean).join(' · ')}
+                          </p>
+                        </td>
                         <td className="p-3 font-bold text-[#B08D57]">
-                          ${p.precio.toLocaleString('es-AR')}
+                          ${precioFinal(p).toLocaleString('es-AR')}
+                          {tieneOferta(p) && (
+                            <span className="block text-[10px] font-normal text-[#80756b] line-through">
+                              ${p.precio.toLocaleString('es-AR')}
+                            </span>
+                          )}
                         </td>
                         <td className="p-3">
                           <span
@@ -440,7 +389,9 @@ export const PanelAdministrador: React.FC<PanelAdministradorProps> = ({
                               <Edit size={16} />
                             </button>
                             <button
-                              onClick={() => alEliminarProducto(p.id)}
+                              onClick={() => {
+                                if (window.confirm(`¿Eliminar "${p.nombre}"? No se puede deshacer.`)) alEliminarProducto(p.id);
+                              }}
                               className="p-1.5 text-[#ba1a1a] hover:bg-[#ffdad6] rounded-lg"
                               title="Eliminar producto"
                             >
@@ -638,138 +589,15 @@ export const PanelAdministrador: React.FC<PanelAdministradorProps> = ({
         )}
       </div>
 
-      {/* MODAL CREACIÓN / EDICIÓN DE PRODUCTO */}
+      {/* FORMULARIO DE CARGA / EDICIÓN DE PRODUCTO (con subida de fotos) */}
       {modalFormularioProducto && (
-        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-[#fff8f4] w-full max-w-lg rounded-3xl p-6 shadow-2xl relative max-h-[90vh] overflow-y-auto">
-            <button
-              onClick={() => setModalFormularioProducto(false)}
-              className="absolute top-4 right-4 text-[#80756b] hover:text-[#1e1b19]"
-            >
-              <Trash2 size={20} />
-            </button>
-
-            <h3 className="font-display font-bold text-xl text-[#1e1b19] mb-4">
-              {productoEditando ? 'Editar Producto' : 'Cargar Nuevo Producto'}
-            </h3>
-
-            <form onSubmit={handleGuardarProducto} className="space-y-3 text-xs">
-              <div>
-                <label className="font-semibold block mb-1">Nombre de la Prenda *</label>
-                <input
-                  type="text"
-                  required
-                  placeholder="Ej. Conjunto Punto Arroz"
-                  value={formNombre}
-                  onChange={(e) => setFormNombre(e.target.value)}
-                  className="w-full bg-white border border-[#d2c4b9] rounded-xl px-3 py-2 outline-none focus:ring-2 focus:ring-[#735a3e]"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="font-semibold block mb-1">SKU *</label>
-                  <input
-                    type="text"
-                    required
-                    value={formSku}
-                    onChange={(e) => setFormSku(e.target.value)}
-                    className="w-full bg-white border border-[#d2c4b9] rounded-xl px-3 py-2 outline-none font-mono"
-                  />
-                </div>
-
-                <div>
-                  <label className="font-semibold block mb-1">Categoría *</label>
-                  <select
-                    value={formCategoria}
-                    onChange={(e) => setFormCategoria(e.target.value as CategoriaProducto)}
-                    className="w-full bg-white border border-[#d2c4b9] rounded-xl px-3 py-2 outline-none"
-                  >
-                    <option value="Bebé Otoño-Invierno">Bebé Otoño-Invierno</option>
-                    <option value="Bebé Primavera-Verano">Bebé Primavera-Verano</option>
-                    <option value="Kids">Kids</option>
-                    <option value="Accesorios">Accesorios</option>
-                  </select>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-3 gap-3">
-                <div>
-                  <label className="font-semibold block mb-1">Precio ($) *</label>
-                  <input
-                    type="number"
-                    required
-                    min={0}
-                    value={formPrecio}
-                    onChange={(e) => setFormPrecio(Number(e.target.value))}
-                    className="w-full bg-white border border-[#d2c4b9] rounded-xl px-3 py-2 outline-none"
-                  />
-                </div>
-
-                <div>
-                  <label className="font-semibold block mb-1">Stock Inicial *</label>
-                  <input
-                    type="number"
-                    required
-                    min={0}
-                    value={formStock}
-                    onChange={(e) => setFormStock(Number(e.target.value))}
-                    className="w-full bg-white border border-[#d2c4b9] rounded-xl px-3 py-2 outline-none"
-                  />
-                </div>
-
-                <div>
-                  <label className="font-semibold block mb-1">Stock Mínimo</label>
-                  <input
-                    type="number"
-                    required
-                    min={1}
-                    value={formStockMin}
-                    onChange={(e) => setFormStockMin(Number(e.target.value))}
-                    className="w-full bg-white border border-[#d2c4b9] rounded-xl px-3 py-2 outline-none"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="font-semibold block mb-1">URL de la Imagen Principal</label>
-                <input
-                  type="url"
-                  placeholder="https://..."
-                  value={formImagen}
-                  onChange={(e) => setFormImagen(e.target.value)}
-                  className="w-full bg-white border border-[#d2c4b9] rounded-xl px-3 py-2 outline-none"
-                />
-              </div>
-
-              <div>
-                <label className="font-semibold block mb-1">Descripción</label>
-                <textarea
-                  rows={2}
-                  value={formDescripcion}
-                  onChange={(e) => setFormDescripcion(e.target.value)}
-                  className="w-full bg-white border border-[#d2c4b9] rounded-xl p-2 outline-none"
-                />
-              </div>
-
-              <div className="pt-2 flex justify-end gap-2">
-                <button
-                  type="button"
-                  onClick={() => setModalFormularioProducto(false)}
-                  className="px-4 py-2 rounded-xl bg-[#f4ece8] text-[#735a3e] font-semibold"
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="submit"
-                  className="px-6 py-2 rounded-xl bg-[#735a3e] text-white font-semibold shadow-md"
-                >
-                  Guardar en Inventario
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
+        <FormularioProducto
+          key={productoEditando?.id || 'nuevo'}
+          producto={productoEditando}
+          alCerrar={() => setModalFormularioProducto(false)}
+          alGuardar={handleGuardarProducto}
+          alSubirImagen={alSubirImagen}
+        />
       )}
 
       {/* Modal de Cambio Masivo de Precios */}

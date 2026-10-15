@@ -1,11 +1,12 @@
 import express from 'express';
 import path from 'path';
+import fs from 'fs';
 import crypto from 'crypto';
 import 'dotenv/config';
 import { createServer as createViteServer } from 'vite';
 import { PRODUCTOS_INICIALES } from './src/data/productosIniciales';
 import { Producto, Pedido, NotificacionCliente, VentaDiaria, ItemCarrito } from './src/types';
-import { calcularCostoEnvio } from './src/config';
+import { calcularCostoEnvio, precioFinal } from './src/config';
 
 /**
  * Servidor Backend Principal de Margarita Indumentaria
@@ -16,16 +17,85 @@ async function iniciarServidor() {
   const app = express();
   const PUERTO = 3000;
 
-  app.use(express.json());
+  // JSON chico para todas las rutas, salvo la de subida de fotos (que tiene su propio límite)
+  const parserJson = express.json({ limit: '300kb' });
+  app.use((req, res, next) => (req.path === '/api/admin/imagenes' ? next() : parserJson(req, res, next)));
 
-  // Base de Datos en Memoria (Sincronizada en tiempo real)
-  let productosDB: Producto[] = [...PRODUCTOS_INICIALES];
-  
-  // Pedidos y notificaciones reales (arrancan vacíos: sin datos de demostración).
-  // ⚠️ Siguen guardándose en memoria: se pierden si el servidor se reinicia.
-  // Próximo paso: conectar una base de datos.
-  let pedidosDB: Pedido[] = [];
-  let notificacionesDB: NotificacionCliente[] = [];
+  // ==========================================
+  // ALMACENAMIENTO EN ARCHIVOS (carpeta data/)
+  // ==========================================
+  // Productos, pedidos y fotos se guardan en disco para que no se pierdan al
+  // reiniciar el servidor. Hacé copias de seguridad de la carpeta data/.
+  const DIR_DATOS = process.env.DATA_DIR || path.join(process.cwd(), 'data');
+  const DIR_IMAGENES = path.join(DIR_DATOS, 'imagenes');
+  fs.mkdirSync(DIR_IMAGENES, { recursive: true });
+
+  function leerJSON<T>(archivo: string, porDefecto: T): T {
+    const ruta = path.join(DIR_DATOS, archivo);
+    if (!fs.existsSync(ruta)) return porDefecto;
+    // Si el archivo existe pero está dañado, mejor frenar que pisarlo con datos vacíos
+    return JSON.parse(fs.readFileSync(ruta, 'utf8'));
+  }
+
+  function guardarJSON(archivo: string, datos: unknown) {
+    const ruta = path.join(DIR_DATOS, archivo);
+    const temporal = ruta + '.tmp';
+    fs.writeFileSync(temporal, JSON.stringify(datos, null, 2), 'utf8');
+    fs.renameSync(temporal, ruta); // reemplazo atómico: nunca queda un archivo a medio escribir
+  }
+
+  let productosDB: Producto[] = leerJSON('productos.json', PRODUCTOS_INICIALES.map(p => ({ ...p })));
+  let pedidosDB: Pedido[] = leerJSON('pedidos.json', []);
+  let notificacionesDB: NotificacionCliente[] = leerJSON('notificaciones.json', []);
+
+  const guardarProductos = () => guardarJSON('productos.json', productosDB);
+  const guardarPedidos = () => guardarJSON('pedidos.json', pedidosDB);
+  const guardarNotificaciones = () => guardarJSON('notificaciones.json', notificacionesDB);
+
+  if (!fs.existsSync(path.join(DIR_DATOS, 'productos.json'))) guardarProductos();
+
+  // Fotos subidas desde el panel
+  app.use('/imagenes', express.static(DIR_IMAGENES, { maxAge: '30d', fallthrough: false }));
+
+  const NOMBRE_IMAGEN_VALIDO = /^[a-f0-9]{24}\.(jpg|png|webp)$/;
+
+  /** Borra del disco las fotos que ya no usa ningún producto. */
+  function borrarImagenesSinUso(urls: string[]) {
+    const enUso = new Set(productosDB.flatMap(p => [p.imagenPrincipal, ...(p.imagenesSecundarias || [])]));
+    for (const url of urls) {
+      if (!url || !url.startsWith('/imagenes/') || enUso.has(url)) continue;
+      const nombre = url.slice('/imagenes/'.length);
+      if (!NOMBRE_IMAGEN_VALIDO.test(nombre)) continue;
+      fs.promises.unlink(path.join(DIR_IMAGENES, nombre)).catch(() => {});
+    }
+  }
+
+  const imagenesDe = (p?: Producto) => (p ? [p.imagenPrincipal, ...(p.imagenesSecundarias || [])] : []);
+
+  /** Deja pasar solo los campos válidos de un producto y normaliza números. */
+  function limpiarDatosProducto(cuerpo: any): Partial<Producto> {
+    const campos = [
+      'sku', 'nombre', 'categoria', 'genero', 'subcategoria', 'precio', 'precioOferta', 'stock',
+      'stockMinimo', 'talles', 'colores', 'descripcion', 'composicion', 'cuidados',
+      'imagenPrincipal', 'imagenesSecundarias', 'esNuevo', 'esDestacado'
+    ];
+    const datos: any = {};
+    for (const campo of campos) {
+      if (cuerpo && cuerpo[campo] !== undefined) datos[campo] = cuerpo[campo];
+    }
+    for (const campo of ['precio', 'stock', 'stockMinimo']) {
+      if (campo in datos) datos[campo] = Math.max(0, Math.round(Number(datos[campo]) || 0));
+    }
+    if ('precioOferta' in datos) {
+      const oferta = Math.round(Number(datos.precioOferta) || 0);
+      datos.precioOferta = oferta > 0 ? oferta : undefined;
+    }
+    if ('subcategoria' in datos && !datos.subcategoria) datos.subcategoria = undefined;
+    for (const campo of ['talles', 'colores', 'imagenesSecundarias']) {
+      if (campo in datos && !Array.isArray(datos[campo])) datos[campo] = [];
+    }
+    return datos;
+  }
 
   // ==========================================
   // AUTENTICACIÓN DEL PANEL DE ADMINISTRACIÓN
@@ -89,6 +159,38 @@ async function iniciarServidor() {
     res.json({ exito: true });
   });
 
+  // Subida de fotos de productos (solo admin). El navegador manda la foto ya
+  // achicada, como texto base64 ("data URL").
+  app.post('/api/admin/imagenes', requiereAdmin, express.json({ limit: '12mb' }), (req, res) => {
+    try {
+      const datos = typeof req.body?.datos === 'string' ? req.body.datos : '';
+      const coincidencia = /^data:image\/(jpeg|png|webp);base64,([A-Za-z0-9+/=]+)$/.exec(datos);
+      if (!coincidencia) {
+        return res.status(400).json({ exito: false, mensaje: 'Formato de imagen no válido (usá JPG, PNG o WEBP).' });
+      }
+      const contenido = Buffer.from(coincidencia[2], 'base64');
+      if (contenido.length === 0 || contenido.length > 8 * 1024 * 1024) {
+        return res.status(413).json({ exito: false, mensaje: 'La imagen es demasiado pesada (máximo 8 MB).' });
+      }
+      // Verificar que el contenido sea realmente una imagen del tipo declarado
+      const esJpg = contenido[0] === 0xff && contenido[1] === 0xd8;
+      const esPng = contenido.subarray(0, 4).toString('hex') === '89504e47';
+      const esWebp = contenido.subarray(0, 4).toString('ascii') === 'RIFF' && contenido.subarray(8, 12).toString('ascii') === 'WEBP';
+      const tipo = coincidencia[1];
+      if ((tipo === 'jpeg' && !esJpg) || (tipo === 'png' && !esPng) || (tipo === 'webp' && !esWebp)) {
+        return res.status(400).json({ exito: false, mensaje: 'El archivo no es una imagen válida.' });
+      }
+
+      const extension = tipo === 'jpeg' ? 'jpg' : tipo;
+      const nombre = `${crypto.randomBytes(12).toString('hex')}.${extension}`;
+      fs.writeFileSync(path.join(DIR_IMAGENES, nombre), contenido);
+      res.status(201).json({ exito: true, url: `/imagenes/${nombre}` });
+    } catch (error) {
+      console.error('Error al guardar imagen:', error);
+      res.status(500).json({ exito: false, mensaje: 'No se pudo guardar la imagen.' });
+    }
+  });
+
   // ==========================================
   // RUTAS DE LA API (API ENDPOINTS EN ESPAÑOL)
   // ==========================================
@@ -101,16 +203,28 @@ async function iniciarServidor() {
   // 2. Cargar nuevo producto (Gestión de Inventario Admin)
   app.post('/api/productos', requiereAdmin, (req, res) => {
     try {
-      const nuevoProdData: Omit<Producto, 'id'> = req.body;
-      const idUnico = 'prod-' + Date.now();
+      const datos = limpiarDatosProducto(req.body);
+      if (!datos.nombre || !datos.categoria || !datos.imagenPrincipal) {
+        return res.status(400).json({ exito: false, mensaje: 'Faltan datos obligatorios (nombre, categoría o foto).' });
+      }
       const nuevoProducto: Producto = {
-        ...nuevoProdData,
-        id: idUnico,
-        sku: nuevoProdData.sku || `MAR-${Math.floor(1000 + Math.random() * 9000)}`,
-        esNuevo: true
-      };
-      
+        stock: 0,
+        stockMinimo: 0,
+        precio: 0,
+        talles: [],
+        colores: [],
+        descripcion: '',
+        composicion: '',
+        cuidados: '',
+        imagenesSecundarias: [],
+        esNuevo: true,
+        ...datos,
+        id: 'prod-' + Date.now(),
+        sku: datos.sku || `MAR-${Math.floor(1000 + Math.random() * 9000)}`
+      } as Producto;
+
       productosDB.unshift(nuevoProducto);
+      guardarProductos();
       res.status(201).json({
         exito: true,
         mensaje: 'Producto creado correctamente y añadido al inventario.',
@@ -130,7 +244,10 @@ async function iniciarServidor() {
       return res.status(404).json({ exito: false, mensaje: 'Producto no encontrado.' });
     }
 
-    productosDB[indice] = { ...productosDB[indice], ...req.body };
+    const anterior = productosDB[indice];
+    productosDB[indice] = { ...anterior, ...limpiarDatosProducto(req.body), id: anterior.id };
+    guardarProductos();
+    borrarImagenesSinUso(imagenesDe(anterior));
     res.json({
       exito: true,
       mensaje: 'Inventario actualizado en tiempo real.',
@@ -189,6 +306,7 @@ async function iniciarServidor() {
         return p;
       });
 
+      guardarProductos();
       res.json({
         exito: true,
         mensaje: `Precios actualizados masivamente para ${cantidadActualizados} productos.`,
@@ -203,7 +321,10 @@ async function iniciarServidor() {
   // 4. Eliminar producto del catálogo
   app.delete('/api/productos/:id', requiereAdmin, (req, res) => {
     const { id } = req.params;
+    const eliminado = productosDB.find(p => p.id === id);
     productosDB = productosDB.filter(p => p.id !== id);
+    guardarProductos();
+    borrarImagenesSinUso(imagenesDe(eliminado));
     res.json({ exito: true, mensaje: 'Producto eliminado del catálogo.' });
   });
 
@@ -257,7 +378,7 @@ async function iniciarServidor() {
         });
       }
 
-      const subtotal = itemsValidados.reduce((s, i) => s + i.producto.precio * i.cantidad, 0);
+      const subtotal = itemsValidados.reduce((s, i) => s + precioFinal(i.producto) * i.cantidad, 0);
       const costoEnvio = calcularCostoEnvio(subtotal);
       const total = subtotal + costoEnvio;
 
@@ -303,6 +424,10 @@ async function iniciarServidor() {
         leida: false
       });
 
+      guardarProductos();
+      guardarPedidos();
+      guardarNotificaciones();
+
       // Al cliente solo se le devuelve lo necesario para armar el mensaje de WhatsApp
       res.status(201).json({
         exito: true,
@@ -341,6 +466,8 @@ async function iniciarServidor() {
       });
     }
 
+    guardarPedidos();
+    guardarNotificaciones();
     res.json({ exito: true, mensaje: 'Estado actualizado correctamente.', pedido });
   });
 
@@ -360,6 +487,7 @@ async function iniciarServidor() {
     const notif = notificacionesDB.find(n => n.id === id);
     if (notif) {
       notif.leida = true;
+      guardarNotificaciones();
     }
     res.json({ exito: true });
   });

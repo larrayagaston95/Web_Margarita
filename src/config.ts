@@ -6,14 +6,16 @@
  * así que alcanza con cambiarlo en este único archivo.
  */
 export const CONFIG_TIENDA = {
-  /** Número de WhatsApp en formato internacional, solo dígitos (ej: 5491123456789). */
-  whatsappNumero: '541145891234',
+  // Datos tomados de margaritaindumentaria.com.ar (confirmá que sigan vigentes)
+  /** Número de WhatsApp en formato internacional, solo dígitos (54 9 + característica + número). */
+  whatsappNumero: '5493532404742',
   /** Teléfono tal como se muestra en el footer. */
-  telefonoVisible: '+54 11 4589 1234',
-  email: 'hola@margaritaindumentaria.com.ar',
-  direccion: 'Av. Cabildo 2450, CABA, Argentina',
+  telefonoVisible: '+54 9 3532 404742',
+  /** Dejar vacío ('') para ocultarlo. */
+  email: '',
+  direccion: 'Neuquén esq. Pueyrredón',
   /** Dejar vacío ('') para ocultar el ícono en el footer. */
-  instagramUrl: '',
+  instagramUrl: 'https://www.instagram.com/margarita_tienda_bb/',
   facebookUrl: '',
 };
 
@@ -30,4 +32,14 @@ export function calcularCostoEnvio(subtotal: number): number {
 
 export function urlWhatsApp(mensaje: string): string {
   return `https://wa.me/${CONFIG_TIENDA.whatsappNumero}?text=${encodeURIComponent(mensaje)}`;
+}
+
+/** Precio que se cobra: el de oferta si está cargado y es menor al normal. */
+export function precioFinal(producto: { precio: number; precioOferta?: number }): number {
+  const oferta = Number(producto.precioOferta);
+  return oferta > 0 && oferta < producto.precio ? oferta : producto.precio;
+}
+
+export function tieneOferta(producto: { precio: number; precioOferta?: number }): boolean {
+  return precioFinal(producto) < producto.precio;
 }

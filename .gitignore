@@ -6,3 +6,6 @@ coverage/
 *.log
 .env*
 !.env.example
+
+# Datos de la tienda (productos, pedidos y fotos subidas): no se suben a GitHub
+/data/

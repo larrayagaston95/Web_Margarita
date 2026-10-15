@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { ItemCarrito } from '../types';
 import { X, Trash2, Plus, Minus, MessageCircle, ShoppingBag, ArrowRight } from 'lucide-react';
-import { calcularCostoEnvio } from '../config';
+import { calcularCostoEnvio, precioFinal } from '../config';
 
 interface CarritoDrawerProps {
   abierto: boolean;
@@ -44,13 +44,13 @@ export const CarritoDrawer: React.FC<CarritoDrawerProps> = ({
     email: '',
     telefono: '',
     direccion: '',
-    ciudad: 'CABA',
+    ciudad: '',
     notas: ''
   });
   const [errorForm, setErrorForm] = useState('');
 
   // Cálculos de totales
-  const subtotal = items.reduce((sum, item) => sum + item.producto.precio * item.cantidad, 0);
+  const subtotal = items.reduce((sum, item) => sum + precioFinal(item.producto) * item.cantidad, 0);
   const costoEnvio = calcularCostoEnvio(subtotal);
   const total = subtotal + costoEnvio;
 
@@ -129,7 +129,7 @@ export const CarritoDrawer: React.FC<CarritoDrawerProps> = ({
 
                   <div className="flex-1 min-w-0">
                     <span className="text-[10px] uppercase font-bold text-[#6B7D68] tracking-wider block">
-                      {item.producto.categoria}
+                      {[item.producto.categoria, item.producto.genero].filter(Boolean).join(' · ')}
                     </span>
                     <h3 className="font-display font-semibold text-sm text-[#1e1b19] truncate">
                       {item.producto.nombre}
@@ -139,7 +139,7 @@ export const CarritoDrawer: React.FC<CarritoDrawerProps> = ({
                       <strong>{item.colorSeleccionado.nombre}</strong>
                     </p>
                     <p className="font-bold text-sm text-[#B08D57] mt-1">
-                      ${(item.producto.precio * item.cantidad).toLocaleString('es-AR')}
+                      ${(precioFinal(item.producto) * item.cantidad).toLocaleString('es-AR')}
                     </p>
                   </div>
 
@@ -224,7 +224,7 @@ export const CarritoDrawer: React.FC<CarritoDrawerProps> = ({
                     <input
                       type="tel"
                       required
-                      placeholder="+54 11 1234 5678"
+                      placeholder="Ej. 3532 404742"
                       value={datosCliente.telefono}
                       onChange={(e) => setDatosCliente({ ...datosCliente, telefono: e.target.value })}
                       className="w-full bg-white border border-[#d2c4b9] rounded-xl px-3 py-2 text-xs outline-none focus:ring-2 focus:ring-[#735a3e]"
@@ -238,7 +238,7 @@ export const CarritoDrawer: React.FC<CarritoDrawerProps> = ({
                     <input
                       type="text"
                       required
-                      placeholder="Av. Cabildo 2450 4B"
+                      placeholder="Calle, número, piso/depto"
                       value={datosCliente.direccion}
                       onChange={(e) => setDatosCliente({ ...datosCliente, direccion: e.target.value })}
                       className="w-full bg-white border border-[#d2c4b9] rounded-xl px-3 py-2 text-xs outline-none focus:ring-2 focus:ring-[#735a3e]"
@@ -250,6 +250,7 @@ export const CarritoDrawer: React.FC<CarritoDrawerProps> = ({
                     <input
                       type="text"
                       value={datosCliente.ciudad}
+                      placeholder="Ciudad y provincia"
                       onChange={(e) => setDatosCliente({ ...datosCliente, ciudad: e.target.value })}
                       className="w-full bg-white border border-[#d2c4b9] rounded-xl px-3 py-2 text-xs outline-none focus:ring-2 focus:ring-[#735a3e]"
                     />

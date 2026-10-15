@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Producto, ColorProducto } from '../types';
-import { X, Star, ShoppingBag, Truck, RefreshCw, ChevronDown, Heart, Check, AlertCircle } from 'lucide-react';
+import { precioFinal, tieneOferta } from '../config';
+import { X, ShoppingBag, Truck, RefreshCw, ChevronDown, Heart, Check, AlertCircle } from 'lucide-react';
 
 interface DetalleProductoModalProps {
   producto: Producto | null;
@@ -120,37 +121,23 @@ export const DetalleProductoModal: React.FC<DetalleProductoModalProps> = ({
             <div className="md:col-span-5 flex flex-col space-y-4">
               <div>
                 <span className="text-[#6B7D68] text-xs font-bold tracking-widest uppercase block mb-1">
-                  {producto.categoria}
+                  {[producto.categoria, producto.genero, producto.subcategoria].filter(Boolean).join(' · ')}
                 </span>
                 <h1 className="font-display font-bold text-2xl md:text-3xl text-[#1e1b19]">
                   {producto.nombre}
                 </h1>
 
-                {/* Calificación y reseñas */}
-                <div className="flex items-center gap-2 mt-2">
-                  <div className="flex text-[#B08D57]">
-                    {[...Array(5)].map((_, i) => (
-                      <Star
-                        key={i}
-                        size={16}
-                        fill={i < Math.floor(producto.calificacion || 5) ? '#B08D57' : 'none'}
-                        className="text-[#B08D57]"
-                      />
-                    ))}
-                  </div>
-                  <span className="text-xs text-[#80756b] font-medium">
-                    ({producto.resenasCount || 12} reseñas verificadas)
-                  </span>
-                </div>
               </div>
 
               {/* Precio */}
               <div className="py-2 border-y border-[#eee7e2]">
-                <p className="font-display font-bold text-2xl md:text-3xl text-[#735a3e]">
-                  ${producto.precio.toLocaleString('es-AR')}
-                </p>
-                <p className="text-[11px] text-[#6B7D68] font-semibold mt-0.5">
-                  3 cuotas sin interés de ${(Math.round(producto.precio / 3)).toLocaleString('es-AR')}
+                <p className="font-display font-bold text-2xl md:text-3xl text-[#735a3e] flex items-baseline gap-3">
+                  ${precioFinal(producto).toLocaleString('es-AR')}
+                  {tieneOferta(producto) && (
+                    <span className="text-base font-normal text-[#80756b] line-through">
+                      ${producto.precio.toLocaleString('es-AR')}
+                    </span>
+                  )}
                 </p>
               </div>
 
@@ -348,7 +335,7 @@ export const DetalleProductoModal: React.FC<DetalleProductoModalProps> = ({
                         {rel.nombre}
                       </h4>
                       <p className="font-bold text-xs text-[#B08D57] mt-1">
-                        ${rel.precio.toLocaleString('es-AR')}
+                        ${precioFinal(rel).toLocaleString('es-AR')}
                       </p>
                     </div>
                   </div>

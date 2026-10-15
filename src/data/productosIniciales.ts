@@ -1,12 +1,17 @@
 import { Producto } from '../types';
 
+/**
+ * Productos de ejemplo: se cargan solo la primera vez que arranca el servidor.
+ * Después, todo se administra desde el panel (/admin).
+ */
 export const PRODUCTOS_INICIALES: Producto[] = [
   {
     id: 'prod-001',
     sku: 'BEB-OI-001',
     nombre: 'Conjunto Punto Arroz',
     categoria: 'Bebé Otoño-Invierno',
-    subcategoria: 'Conjuntos & Sets',
+    genero: 'Unisex',
+    subcategoria: 'Enteritos-Chinitos',
     precio: 42500,
     stock: 14,
     stockMinimo: 5,
@@ -23,16 +28,15 @@ export const PRODUCTOS_INICIALES: Producto[] = [
       'https://lh3.googleusercontent.com/aida/AP1WRLuR_7rmNEBEUHNcbd8OkxRqu1eeDC3nKe_bvKARKn6CBTKHnER3i8YIvMZL7fKgg91BzEkJPfScswvCWYKRhio0Jja-vlXdB5TAks8h3_dBwFuFfeULc5d0IHN4RTIge-FQQAQmPWC89Ub_JFiDfpxzcHz4sAmGfoK-bNU0zNh6Ulrz1DCgIz_YFog43rHBFOylU0QmXJmg5-1uqXEIpcGF6c2-TPo5_LiJp56Fp6n-u0o4kQIigyUaF9Q'
     ],
     esNuevo: true,
-    esDestacado: true,
-    calificacion: 4.9,
-    resenasCount: 18
+    esDestacado: true
   },
   {
     id: 'prod-002',
     sku: 'BEB-PV-002',
     nombre: 'Vestido Floreado Lino',
     categoria: 'Bebé Primavera-Verano',
-    subcategoria: 'Vestidos & Enteritos',
+    genero: 'Nena',
+    subcategoria: 'Enteritos',
     precio: 38900,
     stock: 8,
     stockMinimo: 4,
@@ -47,20 +51,19 @@ export const PRODUCTOS_INICIALES: Producto[] = [
     imagenPrincipal: 'https://lh3.googleusercontent.com/aida/AP1WRLsVwg_B-EDyQBmD_PAOpx_CAYstlSXwz4zJHsHa5JyyA6DTuNh8LSr3dCEn0rSxc3o065p4qjeesVaHDwEzMr5mLKNtFQV9uF1bSJEQsDltGgoHPejRie9tbSn9pDzsanL_QYcKBlILtIS3amglf4dwNFfYac8iqOaJURS884OgM8KXhVPUStQmDwrMO0zPSWLDjCbFMqke4CdPLSQrK_UiDHxysjCYawxiWXEoIjZMyTFQ89QIx_vw66U',
     imagenesSecundarias: [],
     esNuevo: true,
-    esDestacado: true,
-    calificacion: 4.8,
-    resenasCount: 12
+    esDestacado: true
   },
   {
     id: 'prod-003',
     sku: 'KID-OI-003',
     nombre: 'Sweater Kids Lana',
-    categoria: 'Kids',
-    subcategoria: 'Sweaters & Abrigos',
+    categoria: 'Kids Otoño-Invierno',
+    genero: 'Varón',
+    subcategoria: 'Buzos',
     precio: 45000,
     stock: 3, // Stock bajo para probar alertas de inventario
     stockMinimo: 5,
-    talles: ['2T', '4T', '6T'],
+    talles: ['2', '4', '6'],
     colores: [
       { nombre: 'Miel Canela', hex: '#B08D57' },
       { nombre: 'Beige Crudo', hex: '#FAF9F6' }
@@ -71,16 +74,15 @@ export const PRODUCTOS_INICIALES: Producto[] = [
     imagenPrincipal: 'https://lh3.googleusercontent.com/aida/AP1WRLtpNhX_44DpcieFV-vPEl6_qPgg39JGFGgMqjDvUd8LQMCt4NCuLO8WG2fwqdxqtUzvPAMhR8ARrsge42O_6uQ0XGWk9vCZceH0D7ULr7VG8kpUUbm-D9K5R1Bu8qHwpz-zTAhbG7pLYLFfMojKwaHnVMw_Nts2hu5O6yTA9R1KdyDu3yRRrBwSpuxmfyeZ2lQEbZvXyHK8cuZHUY8TVB3kRzhT3epeVp727COdWNHDPpUfsv44YXSFymc',
     imagenesSecundarias: [],
     esNuevo: true,
-    esDestacado: true,
-    calificacion: 5.0,
-    resenasCount: 24
+    esDestacado: true
   },
   {
     id: 'prod-004',
     sku: 'BEB-OI-004',
     nombre: 'Conjunto Algodón Estampado',
     categoria: 'Bebé Otoño-Invierno',
-    subcategoria: 'Conjuntos & Sets',
+    genero: 'Unisex',
+    subcategoria: 'Joggers',
     precio: 12500,
     stock: 22,
     stockMinimo: 6,
@@ -95,16 +97,14 @@ export const PRODUCTOS_INICIALES: Producto[] = [
     imagenPrincipal: 'https://lh3.googleusercontent.com/aida/AP1WRLuR_7rmNEBEUHNcbd8OkxRqu1eeDC3nKe_bvKARKn6CBTKHnER3i8YIvMZL7fKgg91BzEkJPfScswvCWYKRhio0Jja-vlXdB5TAks8h3_dBwFuFfeULc5d0IHN4RTIge-FQQAQmPWC89Ub_JFiDfpxzcHz4sAmGfoK-bNU0zNh6Ulrz1DCgIz_YFog43rHBFOylU0QmXJmg5-1uqXEIpcGF6c2-TPo5_LiJp56Fp6n-u0o4kQIigyUaF9Q',
     imagenesSecundarias: [],
     esNuevo: false,
-    esDestacado: true,
-    calificacion: 4.7,
-    resenasCount: 9
+    esDestacado: true
   },
   {
     id: 'prod-005',
     sku: 'ACC-005',
     nombre: 'Zapatitos Tejidos Sage',
-    categoria: 'Accesorios',
-    subcategoria: 'Accesorios & Calzado',
+    categoria: 'Bebé Otoño-Invierno',
+    genero: 'Unisex',
     precio: 2500,
     stock: 18,
     stockMinimo: 5,
@@ -119,16 +119,15 @@ export const PRODUCTOS_INICIALES: Producto[] = [
     imagenPrincipal: 'https://lh3.googleusercontent.com/aida-public/AB6AXuD64VanyhK3wvMXFhSwW0s7ovBbiPNaRW1biwv6P1rwxnNwD6XZrBDTip-1ctF2QL0Juf1LXX9WAIl5TpYWppPSZvp1L2CKka3q8MLO9z-TVxmYf4KKP0I9IbaaQ5vivERlFK4WU7stueKiAAuqA5qkoljApOjnp3RTePDZjuoIMgZYgul2jSS4egltjzZgB86YPRhOsK4N7k871RiexzUglaJmrBnf5G3W54rhqqJPMi6kKwuA6ZJk',
     imagenesSecundarias: [],
     esNuevo: false,
-    esDestacado: true,
-    calificacion: 4.9,
-    resenasCount: 31
+    esDestacado: true
   },
   {
     id: 'prod-006',
     sku: 'ACC-006',
     nombre: 'Manta Wavy Clay',
-    categoria: 'Accesorios',
-    subcategoria: 'Accesorios & Calzado',
+    categoria: 'Bebé Primavera-Verano',
+    genero: 'Nena',
+    subcategoria: 'Ajuar',
     precio: 4200,
     stock: 10,
     stockMinimo: 3,
@@ -142,16 +141,15 @@ export const PRODUCTOS_INICIALES: Producto[] = [
     imagenPrincipal: 'https://lh3.googleusercontent.com/aida-public/AB6AXuCJE2-hYMnHNxuNbKMp_nUWfr0nbIg8vtBQUiT5EALZ0t1SDsUIN2cz-uBPSIg6cOe_YpuSx3KlAQ62rVUH_n-3FnO7yc8ACw2OueJUC4x9IMhBb7oNkRwiYg1-vgdJX7Q6nw9gRl8empgLI6nj8CP9LHKwe5SgDVnPJeVjcNQLiaasMUOrHbPEDJlm5l7x2cn8-s4QuO_jMbTLDQwu2HMTTxi1GsVCI_F2hCao3gpbKUJkDl2VbNfc',
     imagenesSecundarias: [],
     esNuevo: false,
-    esDestacado: true,
-    calificacion: 5.0,
-    resenasCount: 15
+    esDestacado: true
   },
   {
     id: 'prod-007',
     sku: 'BEB-OI-007',
     nombre: 'Pack Bodys Tierra',
     categoria: 'Bebé Otoño-Invierno',
-    subcategoria: 'Bodys & Básicos',
+    genero: 'Unisex',
+    subcategoria: 'Body Manga Larga',
     precio: 6800,
     stock: 2, // Alerta stock bajo
     stockMinimo: 5,
@@ -165,16 +163,14 @@ export const PRODUCTOS_INICIALES: Producto[] = [
     imagenPrincipal: 'https://lh3.googleusercontent.com/aida-public/AB6AXuAwKcwv9lUiu-XsmT5OnixXW8S_8eeHRx5Asknf4jYBe5BPm4A_3NgNPAFxT7CiSumplzMtA3NOJn3iXqhEGVkISklM9N6r3iGCimCQ13GtjPMtumzx7XpfPaP6r134ZDcp52ChadiTL4WmxaRK1ZWCJygD9tHLw0nvspM7xcy1YEgm5_Ncp2GGngVcPFOlgEabmZVFLBUKyW6nt5KKGTlkFhJAcCtIt8FmgxFGMYFqV5aJ91uO7a5S',
     imagenesSecundarias: [],
     esNuevo: false,
-    esDestacado: false,
-    calificacion: 4.8,
-    resenasCount: 22
+    esDestacado: false
   },
   {
     id: 'prod-008',
     sku: 'ACC-008',
     nombre: 'Gorrito Nudo Algodón',
-    categoria: 'Accesorios',
-    subcategoria: 'Accesorios & Calzado',
+    categoria: 'Bebé Otoño-Invierno',
+    genero: 'Unisex',
     precio: 1800,
     stock: 25,
     stockMinimo: 5,
@@ -189,8 +185,6 @@ export const PRODUCTOS_INICIALES: Producto[] = [
     imagenPrincipal: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDp-PpQnjA8AG8UYuMYmhimfMgaw3M_Fn8D60t_9McIJi6nJ8pvx4AqCezbr0kuYnDkZfn2PMzn5PS51WwAHqBcmS2rQOuJO5FgH-ceCHqEVQ8tF8z3f_VMH-RJ2FxuDiaLO5gMZ_ZMZFPunXPtU6SMwdJkAUnw2g1JplB4R_b7YYYi9uQ-W1b5oJlK0MngKDKviD1IVYq3s70Zzm9-1_AnNvKgtSH0Rp6qPPxxCImBCl3K1nF_vsEj',
     imagenesSecundarias: [],
     esNuevo: false,
-    esDestacado: false,
-    calificacion: 4.9,
-    resenasCount: 11
+    esDestacado: false
   }
 ];
