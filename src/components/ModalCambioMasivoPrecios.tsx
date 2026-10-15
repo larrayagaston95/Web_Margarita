@@ -31,7 +31,6 @@ export const ModalCambioMasivoPrecios: React.FC<ModalCambioMasivoPreciosProps> =
   productos,
   alConfirmarActualizacionMasiva
 }) => {
-  if (!abierto) return null;
 
   // Estados de Configuración
   const [categoriaSeleccionada, setCategoriaSeleccionada] = useState<CategoriaProducto | 'Todas'>('Todas');
@@ -160,6 +159,9 @@ export const ModalCambioMasivoPrecios: React.FC<ModalCambioMasivoPreciosProps> =
       }, 1800);
     }
   };
+
+  // Los hooks van siempre antes de cualquier return (reglas de hooks de React)
+  if (!abierto) return null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">

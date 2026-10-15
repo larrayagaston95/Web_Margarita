@@ -8,6 +8,7 @@ import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, CartesianG
 import { jsPDF } from 'jspdf';
 import { ModalCambioMasivoPrecios } from './ModalCambioMasivoPrecios';
 import { LogoMargarita } from './LogoMargarita';
+import { CONFIG_TIENDA } from '../config';
 
 interface PanelAdministradorProps {
   productos: Producto[];
@@ -163,15 +164,15 @@ export const PanelAdministrador: React.FC<PanelAdministradorProps> = ({
     doc.setTextColor(30, 27, 25);
     doc.setFontSize(14);
     doc.setFont('helvetica', 'bold');
-    doc.text('1. Resumen Ejecutivo del Mes', 15, 45);
+    doc.text('1. Resumen de los Últimos 7 Días', 15, 45);
 
     doc.setFontSize(10);
     doc.setFont('helvetica', 'normal');
-    doc.text(`• Ingresos Totales de Ventas: $${(estadisticas?.ingresosTotales || 180000).toLocaleString('es-AR')}`, 20, 55);
-    doc.text(`• Cantidad de Pedidos Procesados: ${estadisticas?.totalPedidos || 12} pedidos`, 20, 62);
-    doc.text(`• Ticket Promedio por Compra: $${(estadisticas?.ticketPromedio || 15000).toLocaleString('es-AR')}`, 20, 69);
+    doc.text(`• Ingresos Totales de Ventas: $${(estadisticas?.ingresosTotales ?? 0).toLocaleString('es-AR')}`, 20, 55);
+    doc.text(`• Cantidad de Pedidos Procesados: ${estadisticas?.totalPedidos ?? 0} pedidos`, 20, 62);
+    doc.text(`• Ticket Promedio por Compra: $${(estadisticas?.ticketPromedio ?? 0).toLocaleString('es-AR')}`, 20, 69);
     doc.text(`• Total de Productos en Catálogo: ${productos.length} unidades`, 20, 76);
-    doc.text(`• Alertas de Stock Bajo: ${estadisticas?.productosStockBajoCount || 2} productos en nivel crítico`, 20, 83);
+    doc.text(`• Alertas de Stock Bajo: ${estadisticas?.productosStockBajoCount ?? 0} productos en nivel crítico`, 20, 83);
 
     // Tabla de Ventas Recientes
     doc.setFontSize(14);
@@ -194,7 +195,7 @@ export const PanelAdministrador: React.FC<PanelAdministradorProps> = ({
 
     pedidos.slice(0, 10).forEach((ped) => {
       doc.text(ped.numeroPedido, 20, y);
-      doc.text(ped.clienteNombre.slice(0, 22), 55, y);
+      doc.text((ped.clienteNombre || '-').slice(0, 22), 55, y);
       doc.text(ped.metodoPago === 'pasarela' ? 'Pasarela' : 'WhatsApp', 105, y);
       doc.text(ped.estadoPedido, 145, y);
       doc.text(`$${ped.total.toLocaleString('es-AR')}`, 175, y);
@@ -219,7 +220,7 @@ export const PanelAdministrador: React.FC<PanelAdministradorProps> = ({
     // Pie de página del PDF
     doc.setFontSize(8);
     doc.setTextColor(128, 117, 107);
-    doc.text('Margarita Indumentaria — Av. Principal 1234, CABA, Argentina. Documento confidencial de gestión interna.', 15, 285);
+    doc.text(`Margarita Indumentaria — ${CONFIG_TIENDA.direccion}. Documento confidencial de gestión interna.`, 15, 285);
 
     doc.save(`Margarita_Reporte_Mensual_${new Date().getMonth() + 1}_${new Date().getFullYear()}.pdf`);
   };
@@ -772,12 +773,14 @@ export const PanelAdministrador: React.FC<PanelAdministradorProps> = ({
       )}
 
       {/* Modal de Cambio Masivo de Precios */}
-      <ModalCambioMasivoPrecios
-        abierto={modalMasivoPreciosAbierto}
-        alCerrar={() => setModalMasivoPreciosAbierto(false)}
-        productos={productos}
-        alConfirmarActualizacionMasiva={alActualizarMasivoPrecios}
-      />
+      {modalMasivoPreciosAbierto && (
+        <ModalCambioMasivoPrecios
+          abierto={modalMasivoPreciosAbierto}
+          alCerrar={() => setModalMasivoPreciosAbierto(false)}
+          productos={productos}
+          alConfirmarActualizacionMasiva={alActualizarMasivoPrecios}
+        />
+      )}
     </div>
   );
 };

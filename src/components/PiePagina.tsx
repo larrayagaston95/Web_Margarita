@@ -2,16 +2,16 @@ import React from 'react';
 import { Instagram, Facebook, MapPin, Phone, Mail, Heart } from 'lucide-react';
 import { CategoriaProducto } from '../types';
 import { LogoMargarita } from './LogoMargarita';
+import { CONFIG_TIENDA, urlWhatsApp } from '../config';
 
 interface PiePaginaProps {
   alSeleccionarCategoria: (cat: CategoriaProducto | 'Home') => void;
-  alAbrirNotificaciones: () => void;
 }
 
 /**
  * Pie de Página de la Tienda
  */
-export const PiePagina: React.FC<PiePaginaProps> = ({ alSeleccionarCategoria, alAbrirNotificaciones }) => {
+export const PiePagina: React.FC<PiePaginaProps> = ({ alSeleccionarCategoria }) => {
   return (
     <footer className="bg-[#1e1b19] text-[#eee7e2] pt-12 pb-6 px-4 md:px-12 border-t border-[#4e453d]">
       <div className="max-w-[1440px] mx-auto grid grid-cols-1 md:grid-cols-4 gap-8 pb-8 border-b border-[#3a3430]">
@@ -22,12 +22,16 @@ export const PiePagina: React.FC<PiePaginaProps> = ({ alSeleccionarCategoria, al
             Ropa y accesorios para bebés y niños confeccionados artesanalmente en Argentina con materiales nobles, suaves e hipoalergénicos.
           </p>
           <div className="flex gap-3 pt-1">
-            <a href="#" className="w-8 h-8 rounded-full bg-[#3a3430] flex items-center justify-center hover:bg-[#735a3e] transition-colors">
-              <Instagram size={16} />
-            </a>
-            <a href="#" className="w-8 h-8 rounded-full bg-[#3a3430] flex items-center justify-center hover:bg-[#735a3e] transition-colors">
-              <Facebook size={16} />
-            </a>
+            {CONFIG_TIENDA.instagramUrl && (
+              <a href={CONFIG_TIENDA.instagramUrl} target="_blank" rel="noopener noreferrer" aria-label="Instagram" className="w-8 h-8 rounded-full bg-[#3a3430] flex items-center justify-center hover:bg-[#735a3e] transition-colors">
+                <Instagram size={16} />
+              </a>
+            )}
+            {CONFIG_TIENDA.facebookUrl && (
+              <a href={CONFIG_TIENDA.facebookUrl} target="_blank" rel="noopener noreferrer" aria-label="Facebook" className="w-8 h-8 rounded-full bg-[#3a3430] flex items-center justify-center hover:bg-[#735a3e] transition-colors">
+                <Facebook size={16} />
+              </a>
+            )}
           </div>
         </div>
 
@@ -62,14 +66,22 @@ export const PiePagina: React.FC<PiePaginaProps> = ({ alSeleccionarCategoria, al
         <div className="space-y-2">
           <h4 className="font-display font-bold text-sm text-white">Atención al Cliente</h4>
           <ul className="space-y-1.5 text-xs text-[#b1a89c]">
+            {/* Por ahora estas consultas van por WhatsApp; más adelante pueden ser páginas propias */}
             <li>
-              <button onClick={alAbrirNotificaciones} className="hover:text-white transition-colors">
-                Seguimiento de Compras
-              </button>
+              <a href={urlWhatsApp('¡Hola! Quisiera consultar por el estado de mi pedido.')} target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">
+                Consultar por mi pedido
+              </a>
             </li>
-            <li><a href="#" className="hover:text-white transition-colors">Guía de Talles Oficial</a></li>
-            <li><a href="#" className="hover:text-white transition-colors">Preguntas Frecuentes</a></li>
-            <li><a href="#" className="hover:text-white transition-colors">Políticas de Cambios y Devoluciones</a></li>
+            <li>
+              <a href={urlWhatsApp('¡Hola! Quisiera consultar por la guía de talles.')} target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">
+                Guía de talles
+              </a>
+            </li>
+            <li>
+              <a href={urlWhatsApp('¡Hola! Quisiera consultar por cambios y devoluciones.')} target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">
+                Cambios y devoluciones
+              </a>
+            </li>
           </ul>
         </div>
 
@@ -78,15 +90,15 @@ export const PiePagina: React.FC<PiePaginaProps> = ({ alSeleccionarCategoria, al
           <h4 className="font-display font-bold text-sm text-white">Local & Showroom</h4>
           <p className="flex items-center gap-2">
             <MapPin size={16} className="text-[#D9B99B] shrink-0" />
-            Av. Cabildo 2450, CABA, Argentina
+            {CONFIG_TIENDA.direccion}
           </p>
           <p className="flex items-center gap-2">
             <Phone size={16} className="text-[#D9B99B] shrink-0" />
-            +54 11 4589 1234
+            {CONFIG_TIENDA.telefonoVisible}
           </p>
           <p className="flex items-center gap-2">
             <Mail size={16} className="text-[#D9B99B] shrink-0" />
-            hola@margaritaindumentaria.com.ar
+            {CONFIG_TIENDA.email}
           </p>
         </div>
       </div>

@@ -21,7 +21,6 @@ export const ModalPagoPasarela: React.FC<ModalPagoPasarelaProps> = ({
   datosCliente,
   alConfirmarPago
 }) => {
-  if (!abierto) return null;
 
   const [numeroTarjeta, setNumeroTarjeta] = useState('');
   const [nombreTitular, setNombreTitular] = useState(datosCliente.nombre);
@@ -53,6 +52,9 @@ export const ModalPagoPasarela: React.FC<ModalPagoPasarelaProps> = ({
       setPedidoResultado(pedidoCreado);
     }, 1800);
   };
+
+  // Los hooks van siempre antes de cualquier return (reglas de hooks de React)
+  if (!abierto) return null;
 
   return (
     <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in">

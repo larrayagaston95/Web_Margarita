@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ShoppingCart, Search, User, Menu, X, ShieldAlert, Bell } from 'lucide-react';
+import { ShoppingCart, Search, Menu, X, ShieldAlert } from 'lucide-react';
 import { CategoriaProducto } from '../types';
 import { LogoMargarita } from './LogoMargarita';
 
@@ -9,9 +9,7 @@ interface NavegacionProps {
   cantidadCarrito: number;
   alAbrirCarrito: () => void;
   modoAdmin: boolean;
-  alCambiarModoAdmin: (esAdmin: boolean) => void;
-  alAbrirNotificaciones: () => void;
-  notificacionesNoLeidas: number;
+  alSalirAdmin: () => void;
   busqueda: string;
   alCambiarBusqueda: (texto: string) => void;
 }
@@ -19,7 +17,7 @@ interface NavegacionProps {
 /**
  * Componente de Navegación Superior
  * Soporta selección de categorías, búsqueda en tiempo real,
- * acceso al carrito, notificaciones de cliente y cambio a Modo Administrador.
+ * y acceso al carrito. El panel de administración se abre desde /admin (no hay botón público).
  */
 export const Navegacion: React.FC<NavegacionProps> = ({
   categoriaActiva,
@@ -27,9 +25,7 @@ export const Navegacion: React.FC<NavegacionProps> = ({
   cantidadCarrito,
   alAbrirCarrito,
   modoAdmin,
-  alCambiarModoAdmin,
-  alAbrirNotificaciones,
-  notificacionesNoLeidas,
+  alSalirAdmin,
   busqueda,
   alCambiarBusqueda
 }) => {
@@ -40,7 +36,8 @@ export const Navegacion: React.FC<NavegacionProps> = ({
     'Home',
     'Bebé Otoño-Invierno',
     'Bebé Primavera-Verano',
-    'Kids'
+    'Kids',
+    'Accesorios'
   ];
 
   return (
@@ -50,13 +47,13 @@ export const Navegacion: React.FC<NavegacionProps> = ({
         <div className="bg-[#735a3e] text-white text-xs py-1 px-4 text-center font-medium flex justify-between items-center">
           <span className="flex items-center gap-1.5 mx-auto">
             <ShieldAlert size={14} className="text-[#D9B99B]" />
-            MODO ADMINISTRADOR ACTIVO — Panel de Inventario, Ventas y Reportes PDF disponible.
+            MODO ADMINISTRADOR — Panel de Inventario, Ventas y Reportes PDF.
           </span>
           <button 
-            onClick={() => alCambiarModoAdmin(false)}
+            onClick={alSalirAdmin}
             className="underline hover:text-[#D9B99B] text-[11px] font-semibold"
           >
-            Salir de Admin
+            Cerrar sesión
           </button>
         </div>
       )}
@@ -87,9 +84,9 @@ export const Navegacion: React.FC<NavegacionProps> = ({
                     : 'text-[#4e453d] hover:text-[#735a3e]'
                 }`}
               >
-                {cat}
+                {cat === 'Home' ? 'Inicio' : cat}
                 {esActivo && (
-                  <span className="absolute bottom-0 left-0 w-full h-[3px] bg-[#735a3e] rounded-full animate-pulse" />
+                  <span className="absolute bottom-0 left-0 w-full h-[3px] bg-[#735a3e] rounded-full" />
                 )}
               </button>
             );
@@ -108,6 +105,7 @@ export const Navegacion: React.FC<NavegacionProps> = ({
                   placeholder="Buscar prendas..."
                   value={busqueda}
                   onChange={(e) => alCambiarBusqueda(e.target.value)}
+                  aria-label="Buscar prendas"
                   className="bg-transparent border-none outline-none text-xs w-28 md:w-44 text-[#1e1b19] placeholder-[#80756b]"
                   autoFocus
                 />
@@ -126,47 +124,19 @@ export const Navegacion: React.FC<NavegacionProps> = ({
                 onClick={() => setBusquedaVisible(true)}
                 className="p-2 text-[#4e453d] hover:text-[#735a3e] hover:bg-[#f4ece8] rounded-full transition-colors"
                 title="Buscar productos"
+                aria-label="Buscar productos"
               >
                 <Search size={20} />
               </button>
             )}
           </div>
 
-          {/* Notificaciones del Cliente */}
-          <button
-            onClick={alAbrirNotificaciones}
-            className="p-2 text-[#4e453d] hover:text-[#735a3e] hover:bg-[#f4ece8] rounded-full transition-colors relative"
-            title="Ver Notificaciones de Pedidos"
-          >
-            <Bell size={20} />
-            {notificacionesNoLeidas > 0 && (
-              <span className="absolute top-1 right-1 bg-[#E5989B] text-white text-[10px] w-4 h-4 rounded-full flex items-center justify-center font-bold animate-bounce">
-                {notificacionesNoLeidas}
-              </span>
-            )}
-          </button>
-
-          {/* Toggle Panel Administrador */}
-          <button
-            onClick={() => alCambiarModoAdmin(!modoAdmin)}
-            className={`px-3 py-1.5 rounded-full text-xs font-semibold flex items-center gap-1.5 transition-all ${
-              modoAdmin 
-                ? 'bg-[#735a3e] text-white shadow-sm' 
-                : 'bg-[#f4ece8] text-[#735a3e] hover:bg-[#e8e1dd]'
-            }`}
-            title="Acceder al Panel de Control Admin"
-          >
-            <User size={15} />
-            <span className="hidden sm:inline">
-              {modoAdmin ? 'Panel Admin' : 'Admin Access'}
-            </span>
-          </button>
-
           {/* Carrito de Compras */}
           <button
             onClick={alAbrirCarrito}
             className="p-2 text-[#4e453d] hover:text-[#735a3e] hover:bg-[#f4ece8] rounded-full transition-colors relative"
             title="Ver Carrito de Compras"
+            aria-label={`Ver carrito (${cantidadCarrito} productos)`}
           >
             <ShoppingCart size={22} />
             {cantidadCarrito > 0 && (
@@ -179,6 +149,7 @@ export const Navegacion: React.FC<NavegacionProps> = ({
           {/* Botón Menú Móvil */}
           <button
             onClick={() => setMenuMovilAbierto(!menuMovilAbierto)}
+            aria-label={menuMovilAbierto ? 'Cerrar menú' : 'Abrir menú'}
             className="p-2 text-[#4e453d] lg:hidden hover:bg-[#f4ece8] rounded-full"
           >
             {menuMovilAbierto ? <X size={24} /> : <Menu size={24} />}
@@ -202,21 +173,9 @@ export const Navegacion: React.FC<NavegacionProps> = ({
                   : 'text-[#4e453d] hover:bg-[#f4ece8]'
               }`}
             >
-              {cat}
+              {cat === 'Home' ? 'Inicio' : cat}
             </button>
           ))}
-          <div className="pt-2 border-t border-[#eee7e2] flex justify-between items-center">
-            <span className="text-xs text-[#80756b]">Panel de Control</span>
-            <button
-              onClick={() => {
-                alCambiarModoAdmin(!modoAdmin);
-                setMenuMovilAbierto(false);
-              }}
-              className="text-xs text-[#735a3e] font-bold underline"
-            >
-              {modoAdmin ? 'Ver Tienda' : 'Ingresar a Gestión Admin'}
-            </button>
-          </div>
         </div>
       )}
     </header>

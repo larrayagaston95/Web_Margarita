@@ -21,17 +21,15 @@ export const DetalleProductoModal: React.FC<DetalleProductoModalProps> = ({
   productosRelacionados,
   alSeleccionarProductoRelacionado
 }) => {
-  if (!producto) return null;
-
   const [talleSeleccionado, setTalleSeleccionado] = useState<string>(
-    producto.talles[0] || 'Unico'
+    producto?.talles[0] || 'Unico'
   );
   const [colorSeleccionado, setColorSeleccionado] = useState<ColorProducto>(
-    producto.colores[0] || { nombre: 'Crudo', hex: '#FAF9F6' }
+    producto?.colores[0] || { nombre: 'Crudo', hex: '#FAF9F6' }
   );
   const [cantidad, setCantidad] = useState<number>(1);
   const [imagenActiva, setImagenActiva] = useState<string>(
-    producto.imagenPrincipal
+    producto?.imagenPrincipal || ''
   );
   const [detallesAbiertos, setDetallesAbiertos] = useState(true);
   const [cuidadosAbiertos, setCuidadosAbiertos] = useState(false);
@@ -39,10 +37,14 @@ export const DetalleProductoModal: React.FC<DetalleProductoModalProps> = ({
   const [guiaTallesAbierta, setGuiaTallesAbierta] = useState(false);
 
   const handleAgregar = () => {
+    if (!producto) return;
     alAgregarAlCarrito(producto, talleSeleccionado, colorSeleccionado, cantidad);
     setAgregadoConfirmado(true);
     setTimeout(() => setAgregadoConfirmado(false), 2500);
   };
+
+  // Los hooks van siempre antes de cualquier return (reglas de hooks de React)
+  if (!producto) return null;
 
   return (
     <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4 overflow-y-auto animate-fade-in">

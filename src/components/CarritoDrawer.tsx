@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { ItemCarrito } from '../types';
-import { X, Trash2, Plus, Minus, Lock, MessageCircle, CreditCard, ShoppingBag, ArrowRight } from 'lucide-react';
+import { X, Trash2, Plus, Minus, MessageCircle, ShoppingBag, ArrowRight } from 'lucide-react';
+import { calcularCostoEnvio } from '../config';
 
 interface CarritoDrawerProps {
   abierto: boolean;
@@ -8,8 +9,9 @@ interface CarritoDrawerProps {
   items: ItemCarrito[];
   alActualizarCantidad: (idItem: string, delta: number) => void;
   alEliminarItem: (idItem: string) => void;
-  alIniciarPagoPasarela: (datosCliente: DatosCliente) => void;
   alEnviarWhatsApp: (datosCliente: DatosCliente) => void;
+  /** Error devuelto por el servidor al registrar el pedido (ej. sin stock). */
+  errorPedido?: string;
 }
 
 export interface DatosCliente {
@@ -23,8 +25,8 @@ export interface DatosCliente {
 
 /**
  * Componente Carrito de Compras ("Tu Carrito")
- * Replica fielmente la vista del carrito de la maqueta:
- * Permite pago por pasarela de pago simulada o envío directo del pedido por WhatsApp.
+ * Los pedidos se envían por WhatsApp para coordinar pago y envío.
+ * (El pago online se agregará cuando se integre una pasarela real, ej. Mercado Pago.)
  */
 export const CarritoDrawer: React.FC<CarritoDrawerProps> = ({
   abierto,
@@ -32,10 +34,9 @@ export const CarritoDrawer: React.FC<CarritoDrawerProps> = ({
   items,
   alActualizarCantidad,
   alEliminarItem,
-  alIniciarPagoPasarela,
-  alEnviarWhatsApp
+  alEnviarWhatsApp,
+  errorPedido
 }) => {
-  if (!abierto) return null;
 
   const [modoCheckout, setModoCheckout] = useState(false);
   const [datosCliente, setDatosCliente] = useState<DatosCliente>({
@@ -50,7 +51,7 @@ export const CarritoDrawer: React.FC<CarritoDrawerProps> = ({
 
   // Cálculos de totales
   const subtotal = items.reduce((sum, item) => sum + item.producto.precio * item.cantidad, 0);
-  const costoEnvio = subtotal >= 50000 || subtotal === 0 ? 0 : 2800;
+  const costoEnvio = calcularCostoEnvio(subtotal);
   const total = subtotal + costoEnvio;
 
   const validarFormulario = (): boolean => {
@@ -62,15 +63,13 @@ export const CarritoDrawer: React.FC<CarritoDrawerProps> = ({
     return true;
   };
 
-  const handleProcesarPasarela = () => {
-    if (!validarFormulario()) return;
-    alIniciarPagoPasarela(datosCliente);
-  };
-
   const handleProcesarWhatsApp = () => {
     if (!validarFormulario()) return;
     alEnviarWhatsApp(datosCliente);
   };
+
+  // Los hooks van siempre antes de cualquier return (reglas de hooks de React)
+  if (!abierto) return null;
 
   return (
     <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex justify-end animate-fade-in">
@@ -89,6 +88,7 @@ export const CarritoDrawer: React.FC<CarritoDrawerProps> = ({
 
           <button
             onClick={alCerrar}
+            aria-label="Cerrar carrito"
             className="p-2 text-[#4e453d] hover:text-[#1e1b19] hover:bg-[#e8e1dd] rounded-full transition-colors"
           >
             <X size={20} />
@@ -187,9 +187,9 @@ export const CarritoDrawer: React.FC<CarritoDrawerProps> = ({
                 </button>
               </div>
 
-              {errorForm && (
-                <div className="p-3 bg-[#ffdad6] text-[#93000a] text-xs rounded-xl font-medium">
-                  {errorForm}
+              {(errorForm || errorPedido) && (
+                <div role="alert" className="p-3 bg-[#ffdad6] text-[#93000a] text-xs rounded-xl font-medium">
+                  {errorForm || errorPedido}
                 </div>
               )}
 
@@ -317,29 +317,17 @@ export const CarritoDrawer: React.FC<CarritoDrawerProps> = ({
                 <ArrowRight size={16} />
               </button>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {/* Opción 1: Pagar por Pasarela */}
-                <button
-                  onClick={handleProcesarPasarela}
-                  className="bg-[#735a3e] text-white py-3 px-4 rounded-xl font-semibold text-xs uppercase tracking-wider hover:bg-[#5a4229] transition-all flex items-center justify-center gap-1.5 shadow-md active:scale-95"
-                >
-                  <CreditCard size={16} />
-                  Pagar por Pasarela
-                </button>
-
-                {/* Opción 2: Enviar por WhatsApp */}
-                <button
-                  onClick={handleProcesarWhatsApp}
-                  className="bg-[#25D366] text-white py-3 px-4 rounded-xl font-semibold text-xs uppercase tracking-wider hover:bg-[#20bd5a] transition-all flex items-center justify-center gap-1.5 shadow-md active:scale-95"
-                >
-                  <MessageCircle size={16} />
-                  Acordar por WhatsApp
-                </button>
-              </div>
+              <button
+                onClick={handleProcesarWhatsApp}
+                className="w-full bg-[#25D366] text-white py-3.5 rounded-2xl font-semibold text-xs uppercase tracking-wider hover:bg-[#20bd5a] transition-all flex items-center justify-center gap-2 shadow-md active:scale-95"
+              >
+                <MessageCircle size={16} />
+                Enviar pedido por WhatsApp
+              </button>
             )}
 
             <p className="text-[11px] text-center text-[#80756b] flex items-center justify-center gap-1">
-              <Lock size={12} /> Compra 100% Segura y Protegida
+              Coordinamos el pago y el envío con vos por WhatsApp.
             </p>
           </div>
         )}
